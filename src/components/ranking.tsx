@@ -1,7 +1,7 @@
 import { getAllSubmissions } from "@/lib/store";
 import { RankingClient } from "./ranking-client";
 
-export function Ranking() {
-  const submissions = getAllSubmissions();
+export async function Ranking() {
+  const submissions = await getAllSubmissions();
   return <RankingClient submissions={submissions} />;
 }

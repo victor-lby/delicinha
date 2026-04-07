@@ -1,5 +1,4 @@
-import fs from "fs";
-import path from "path";
+import { Redis } from "@upstash/redis";
 
 export type SubmissionMetric = {
   label: string;
@@ -37,52 +36,51 @@ export type AppSubmission = {
   createdAt: string;
 };
 
-const DATA_FILE = path.join(process.cwd(), "data", "submissions.json");
+const redis = new Redis({
+  url: process.env.STORAGE_KV_REST_API_URL!,
+  token: process.env.STORAGE_KV_REST_API_TOKEN!,
+});
 
-function ensureDataDir() {
-  const dir = path.dirname(DATA_FILE);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+const SUBMISSIONS_KEY = "submissions";
+
+function submissionKey(slug: string) {
+  return `submission:${slug}`;
+}
+
+export async function getAllSubmissions(): Promise<AppSubmission[]> {
+  const slugs = await redis.smembers(SUBMISSIONS_KEY);
+  if (slugs.length === 0) return [];
+
+  const pipeline = redis.pipeline();
+  for (const slug of slugs) {
+    pipeline.get(submissionKey(slug));
   }
+  const results = await pipeline.exec<(AppSubmission | null)[]>();
+
+  return results
+    .filter((s): s is AppSubmission => s !== null)
+    .sort((a, b) => b.votes - a.votes);
 }
 
-function readStore(): AppSubmission[] {
-  ensureDataDir();
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
-    return [];
-  }
-  const raw = fs.readFileSync(DATA_FILE, "utf-8");
-  return JSON.parse(raw);
+export async function getSubmissionBySlug(slug: string): Promise<AppSubmission | null> {
+  return await redis.get<AppSubmission>(submissionKey(slug));
 }
 
-function writeStore(data: AppSubmission[]) {
-  ensureDataDir();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+export async function addSubmission(submission: AppSubmission): Promise<void> {
+  const pipeline = redis.pipeline();
+  pipeline.set(submissionKey(submission.slug), submission);
+  pipeline.sadd(SUBMISSIONS_KEY, submission.slug);
+  await pipeline.exec();
 }
 
-export function getAllSubmissions(): AppSubmission[] {
-  return readStore().sort((a, b) => b.votes - a.votes);
-}
-
-export function getSubmissionBySlug(slug: string): AppSubmission | undefined {
-  return readStore().find((s) => s.slug === slug);
-}
-
-export function addSubmission(submission: AppSubmission): void {
-  const data = readStore();
-  data.push(submission);
-  writeStore(data);
-}
-
-export function voteOnSubmission(slug: string, direction: "up" | "down"): number {
-  const data = readStore();
-  const item = data.find((s) => s.slug === slug);
+export async function voteOnSubmission(slug: string, direction: "up" | "down"): Promise<number> {
+  const item = await redis.get<AppSubmission>(submissionKey(slug));
   if (!item) return 0;
+
   item.votes += direction === "up" ? 1 : -1;
   if (item.votes < 0) item.votes = 0;
   item.reviews = `${item.votes.toLocaleString("pt-BR")} avaliações`;
-  writeStore(data);
+
+  await redis.set(submissionKey(slug), item);
   return item.votes;
 }
-

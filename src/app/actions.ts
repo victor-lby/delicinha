@@ -20,13 +20,13 @@ export async function submitApp(formData: FormData) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-  const existing = getSubmissionBySlug(slug);
+  const existing = await getSubmissionBySlug(slug);
   if (existing) {
     return { error: "Esse app já foi cadastrado." };
   }
 
   const submission = await evaluateSubmission(name, url);
-  addSubmission(submission);
+  await addSubmission(submission);
 
   revalidatePath("/");
   revalidatePath(`/apps/${slug}`);
@@ -34,7 +34,7 @@ export async function submitApp(formData: FormData) {
 }
 
 export async function voteApp(slug: string, direction: "up" | "down") {
-  const newVotes = voteOnSubmission(slug, direction);
+  const newVotes = await voteOnSubmission(slug, direction);
   revalidatePath("/");
   revalidatePath(`/apps/${slug}`);
   return { votes: newVotes };

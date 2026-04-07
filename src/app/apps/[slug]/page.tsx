@@ -38,7 +38,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AppDetailPage({ params }: DetailPageProps) {
   const { slug } = await params;
-  const app = getSubmissionBySlug(slug);
+  const app = await getSubmissionBySlug(slug);
 
   if (!app) {
     notFound();
