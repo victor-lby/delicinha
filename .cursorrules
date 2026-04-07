@@ -1,0 +1,29 @@
+You are working on DELICINHA, a Brazilian Portuguese platform for discovering and ranking AI apps.
+
+Tech stack: Next.js 16 (App Router), React 19, TypeScript strict, Tailwind CSS v4, React Compiler.
+AI agent: Gemini 2.0 Flash via @google/genai with local fallback.
+Persistence: JSON file (no database).
+
+Rules:
+- UI text must be in Portuguese (pt-BR). Code identifiers in English.
+- Use Server Components by default. Only add "use client" when the component needs state, effects, or browser APIs.
+- Use path alias @/ for imports (maps to src/).
+- Use Tailwind classes inline. No CSS modules. Tailwind v4 has no config file — custom theme is in globals.css via @theme block.
+- Fonts: font-adlam for headings/logo, font-sans (Inter) for body text.
+- Color palette: backgrounds #0D001A/#1A0033, accents #FF1493/#9B30FF, highlights #FFD700.
+- Large border-radius: 32-40px for cards, 12-16px for buttons.
+- Icons from lucide-react only.
+- Server actions for mutations (submitApp, voteApp) in src/app/actions.ts.
+- Data flows: server component reads from store.ts → passes as props to client components.
+- After mutations, call revalidatePath() to refresh data.
+- The AI evaluator (src/lib/ai-evaluator.ts) is async and must always have a local fallback when GEMINI_API_KEY is not set.
+- All commands run from the project root.
+- No linter or test runner configured — verify changes with npm run build.
+
+Key files:
+- src/lib/store.ts — JSON persistence (getAllSubmissions, addSubmission, voteOnSubmission)
+- src/lib/ai-evaluator.ts — Gemini evaluator + fallback (evaluateSubmission)
+- src/app/actions.ts — Server actions
+- src/components/ranking-client.tsx — Client-side filters, sort, search, pagination
+- src/components/hero.tsx — Submission form (useActionState)
+- src/components/vote-buttons.tsx — Vote UI (useTransition)

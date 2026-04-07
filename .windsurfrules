@@ -1,0 +1,16 @@
+You are working on DELICINHA, a Brazilian Portuguese platform for discovering and ranking AI apps.
+
+Tech stack: Next.js 16 (App Router), React 19, TypeScript strict, Tailwind CSS v4, React Compiler.
+AI agent: Gemini 2.0 Flash via @google/genai with local fallback.
+Persistence: JSON file (no database).
+
+Rules:
+- UI text in Portuguese (pt-BR). Code identifiers in English.
+- Server Components by default. "use client" only for state/interactivity.
+- Path alias @/ maps to src/.
+- Tailwind v4 inline classes. No config file — @theme in globals.css.
+- Fonts: font-adlam (headings), font-sans/Inter (body).
+- Colors: #0D001A/#1A0033 backgrounds, #FF1493/#9B30FF accents, #FFD700 highlights.
+- Server actions in src/app/actions.ts. revalidatePath() after mutations.
+- AI evaluator must always have local fallback.
+- Verify changes with npm run build.
